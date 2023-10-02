@@ -1,0 +1,253 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+class Transaction {
+    private Date date;
+    private String type;
+    private double amount;
+
+    public Transaction(Date date, String type, double amount) {
+        this.date = date;
+        this.type = type;
+        this.amount = amount;
+    }
+
+    @Override
+    public String toString() {
+        return date + " | " + type + " | " + amount;
+    }
+}
+
+class TransactionHistory {
+    private List<Transaction> transactions;
+
+    public TransactionHistory() {
+        this.transactions = new ArrayList<>();
+    }
+
+    public void addTransaction(Date date, String type, double amount) {             //code to add transaction
+        Transaction transaction = new Transaction(date, type, amount);
+        transactions.add(transaction);
+    }
+
+    public void displayTransactionHistory() {                              //code to display transaction history
+        if (transactions.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "There is no transaction history available.", "Transaction History", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Transaction History:\n");
+            for (Transaction transaction : transactions) {
+                sb.append(transaction).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, sb.toString(), "Transaction History", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+}
+
+class ATM {
+    private String userId;
+    private int userPin;
+    private double balance;
+    private TransactionHistory transactionHistory;
+
+    public ATM(String userId, int userPin) {
+        this.userId = userId;
+        this.userPin = userPin;
+        this.balance = 0.0;
+        this.transactionHistory = new TransactionHistory();
+    }
+
+    public boolean authenticateUser(int enteredPin) {
+        return userPin == enteredPin;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void deposit(double amount) {                        //code to proceed the deposit action
+        balance += amount;
+        transactionHistory.addTransaction(new Date(), "Deposit", amount);
+        JOptionPane.showMessageDialog(null, " Money Deposited successfully. Current balance: " + balance, "Deposit", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void withdraw(double amount) {                         //code to proceed the withdraw action
+        if (balance >= amount) {
+            balance -= amount;
+            transactionHistory.addTransaction(new Date(), "Withdraw", amount);
+            JOptionPane.showMessageDialog(null, " Money Withdrawal successful. Current balance: " + balance, "Withdraw", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, "Insufficient funds. Current balance: " + balance, "Withdraw", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    public void transfer(ATM receiver, double amount) {                     //code to proceed the transfer action
+        if (balance >= amount) {
+            balance -= amount;
+            receiver.deposit(amount);
+            transactionHistory.addTransaction(new Date(), "Transfer to " + receiver.userId, amount);
+            JOptionPane.showMessageDialog(null, "Transfer successfully completed! Current balance: " + balance, "Transfer", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, "Insufficient balance. Current balance: " + balance, "Transfer", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    public void showTransactionHistory() {                        //method to call the transaction history 
+        transactionHistory.displayTransactionHistory();
+    }
+}
+
+public class atminter {                     //main class
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            createAndShowGUI();
+        });
+    }
+
+    private static void createAndShowGUI() {
+        JFrame frame = new JFrame("ATM Application");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 250);
+        frame.setLayout(new BorderLayout());
+
+        JLabel userIdLabel = new JLabel("User ID:");
+        JTextField userIdTextField = new JTextField(15);
+
+        JLabel pinLabel = new JLabel("PIN:");
+        JPasswordField pinPasswordField = new JPasswordField(15);
+
+        JButton loginButton = new JButton("Login");
+        loginButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String userId = userIdTextField.getText();
+                String pin = new String(pinPasswordField.getPassword());
+
+                // Simulating a user account
+                String storedUserId = "username";
+                String storedPin = "1234";
+                ATM userAccount = new ATM(storedUserId, Integer.parseInt(storedPin));
+
+                if (!userId.equals(storedUserId) || !pin.equals(storedPin)) {         //checking the userid and password are correct
+                    JOptionPane.showMessageDialog(frame, "Authentication failed. Please enter the valid User ID and PIN number.", "Authentication Failed", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    showATMFunctionalities(frame, userAccount);
+                }
+            }
+        });
+
+        JPanel loginPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        loginPanel.add(userIdLabel, gbc);
+
+        gbc.gridx = 1;
+        loginPanel.add(userIdTextField, gbc);
+
+        gbc.gridy = 1;
+        loginPanel.add(pinLabel, gbc);
+
+        gbc.gridx = 1;
+        loginPanel.add(pinPasswordField, gbc);
+
+        gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        loginPanel.add(loginButton, gbc);
+
+        frame.add(loginPanel, BorderLayout.CENTER);
+        frame.setVisible(true);
+    }
+
+    private static void showATMFunctionalities(JFrame frame, ATM userAccount) {
+        frame.getContentPane().removeAll();
+        frame.repaint();
+
+        JPanel atmPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        JButton transactionHistoryButton = new JButton("Transactions History");
+        transactionHistoryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                userAccount.showTransactionHistory();
+            }
+        });
+        atmPanel.add(transactionHistoryButton, gbc);
+
+        JButton withdrawButton = new JButton("Withdraw");
+        withdrawButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String withdrawAmountString = JOptionPane.showInputDialog(frame, "Enter the amount to be withdraw:", "Withdraw", JOptionPane.PLAIN_MESSAGE);
+                if (withdrawAmountString != null && !withdrawAmountString.isEmpty()) {
+                    double withdrawAmount = Double.parseDouble(withdrawAmountString);
+                    userAccount.withdraw(withdrawAmount);
+                }
+            }
+        });
+        gbc.gridy = 1;
+        atmPanel.add(withdrawButton, gbc);
+
+        JButton depositButton = new JButton("Deposit");
+        depositButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String depositAmountString = JOptionPane.showInputDialog(frame, "Enter amount to be deposited:", "Deposit", JOptionPane.PLAIN_MESSAGE);
+                if (depositAmountString != null && !depositAmountString.isEmpty()) {
+                    double depositAmount = Double.parseDouble(depositAmountString);
+                    userAccount.deposit(depositAmount);
+                }
+            }
+        });
+        gbc.gridy = 2;
+        atmPanel.add(depositButton, gbc);
+
+        JButton transferButton = new JButton("Transfer");
+        transferButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String recipientId = JOptionPane.showInputDialog(frame, "Enter user ID of the recipient:", "Transfer", JOptionPane.PLAIN_MESSAGE);
+                if (recipientId == null || recipientId.isEmpty()) {
+                    return;
+                }
+
+                String transferAmountString = JOptionPane.showInputDialog(frame, "Enter amount to be transferred:", "Transfer", JOptionPane.PLAIN_MESSAGE);
+                if (transferAmountString == null || transferAmountString.isEmpty()) {
+                    return;
+                }
+
+                double transferAmount = Double.parseDouble(transferAmountString);
+                // Simulating recipient account
+                ATM recipientAccount = new ATM(recipientId, 0);
+                userAccount.transfer(recipientAccount, transferAmount);
+            }
+        });
+        gbc.gridy = 3;
+        atmPanel.add(transferButton, gbc);
+
+        JButton quitButton = new JButton("Quit");
+        quitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(frame, "Thank you for using the ATM services. Goodbye!", "Quit", JOptionPane.INFORMATION_MESSAGE);
+                System.exit(0);
+            }
+        });
+        gbc.gridy = 4;
+        atmPanel.add(quitButton, gbc);
+
+        frame.add(atmPanel, BorderLayout.CENTER);
+        frame.setVisible(true);
+    }
+}
